@@ -53,11 +53,11 @@ const average = (arr) =>
 const API_KEY = "2034aeff";
 
 export default function App() {
+  const [query, setQuery] = useState("");
   const [movies, setMovies] = useState([]);
   const [watched, setWatched] = useState([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const query = "interstellar";
 
   useEffect(() => {
     const fetchMovies = async () => {
@@ -77,13 +77,19 @@ export default function App() {
         setIsLoading(false);
       }
     };
+
+    if (query.length < 3) {
+      setMovies([]);
+      setError("");
+      return;
+    }
     fetchMovies();
-  }, []);
+  }, [query]);
 
   return (
     <>
       <Navbar>
-        <Search />
+        <Search query={query} setQuery={setQuery} />
         <NumResults movies={movies} />
       </Navbar>
       <Main>
@@ -119,9 +125,7 @@ function Logo() {
   );
 }
 
-function Search() {
-  const [query, setQuery] = useState("");
-
+function Search({ query, setQuery }) {
   return (
     <input
       className="search"
@@ -167,32 +171,9 @@ function Box({ children }) {
   );
 }
 
-// function WatchedBox() {
-//   const [watched, setWatched] = useState(tempWatchedData);
-//   const [isOpen2, setIsOpen2] = useState(true);
-
-//   return (
-//     <div className="box">
-//       <button
-//         className="btn-toggle"
-//         onClick={() => setIsOpen2((open) => !open)}
-//       >
-//         {isOpen2 ? "–" : "+"}
-//       </button>
-//       {isOpen2 && (
-//         <>
-//           <WatchedSummary watched={watched} />
-//           <WatchedMovieList watched={watched} />
-//         </>
-//       )}
-//     </div>
-//   );
-// }
-
 function MovieList({ movies }) {
   return (
     <ul className="list">
-      {console.log("Movies: ", movies)}
       {movies?.map((movie) => (
         <Movie movie={movie} />
       ))}
