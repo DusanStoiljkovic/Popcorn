@@ -16,8 +16,9 @@ export default function StarRating({
   size = 48,
   className = "",
   onSetRating,
+  rate,
 }) {
-  const [rating, setRating] = useState(0);
+  const [rating, setRating] = useState(rate ? rate : 0);
   const [tempRating, setTempRating] = useState(0);
 
   function handleRating(rating) {
