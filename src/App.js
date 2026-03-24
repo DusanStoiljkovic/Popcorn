@@ -78,19 +78,22 @@ export default function App() {
   }
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchMovies = async () => {
       try {
         setIsLoading(true);
         const res = await fetch(
           `http://www.omdbapi.com/?apikey=${API_KEY}&s=${query}`,
+          { signal: controller.signal },
         );
 
         if (!res.ok) throw new Error("Something went wrong.");
 
         const data = await res.json();
         setMovies(data.Search);
+        setError("");
       } catch (err) {
-        setError(err.message);
+        if (err.name !== "AbortError") setError(err.message);
       } finally {
         setIsLoading(false);
       }
@@ -101,7 +104,12 @@ export default function App() {
       setError("");
       return;
     }
+    closeSelectedMovie();
     fetchMovies();
+
+    return () => {
+      controller.abort();
+    };
   }, [query]);
 
   return (
@@ -207,7 +215,7 @@ function MovieList({ movies, onSelectMovie }) {
   return (
     <ul className="list list-movies">
       {movies?.map((movie) => (
-        <Movie movie={movie} onSelectMovie={onSelectMovie} />
+        <Movie movie={movie} onSelectMovie={onSelectMovie} key={movie.imdbID} />
       ))}
     </ul>
   );
@@ -215,7 +223,7 @@ function MovieList({ movies, onSelectMovie }) {
 
 function Movie({ movie, onSelectMovie, handleDelete }) {
   return (
-    <li key={movie.imdbID} onClick={() => onSelectMovie(movie.imdbID)}>
+    <li onClick={() => onSelectMovie(movie.imdbID)}>
       <img src={movie.Poster} alt={`${movie.Title} poster`} />
       <h3>{movie.Title}</h3>
       <div>
@@ -308,6 +316,30 @@ function MovieDetails({
     [selectedId],
   );
 
+  useEffect(
+    function () {
+      if (!title) return;
+      document.title = `Movie | ${title}`;
+
+      return function () {
+        document.title = "React App";
+      };
+    },
+    [title],
+  );
+
+  useEffect(() => {
+    const callback = (e) => {
+      if (e.code === "Escape") onCloseSelectedMovie();
+    };
+
+    document.addEventListener("keydown", callback);
+
+    return () => {
+      document.removeEventListener("keydown", callback);
+    };
+  }, [onCloseSelectedMovie]);
+
   return isLoading ? (
     <Loader />
   ) : (
@@ -355,7 +387,6 @@ function MovieDetails({
         <p>Starring {actors}</p>
         <p>Director {director}</p>
       </section>
-      {console.log(movie)}
     </div>
   );
 }
